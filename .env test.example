@@ -38,8 +38,8 @@ SLACK_SIGNING_SECRET=
 # ── War Room ──────────────────────────────────────────
 WARROOM_ENABLED=true
 WARROOM_MODE=live               # live | legacy
-DEEPGRAM_API_KEY=bd945d500a2e5f06f059fabf8ed7722a8ebccfec
-CARTESIA_API_KEY=sk_car_vLZTvVLcc2b11p63zdKD85
+DEEPGRAM_API_KEY=
+CARTESIA_API_KEY=
 
 # ── Dashboard ─────────────────────────────────────────
 DASHBOARD_TOKEN=
@@ -47,5 +47,5 @@ DASHBOARD_PORT=3141
 
 # ── Meeting Bot ───────────────────────────────────────
 PIKA_API_KEY=
-RECALL_API_KEY=f70ff08fbe95217d42c672948256411e800c2836
+RECALL_API_KEY=
 MEET_PREFLIGHT_SECONDS=75
