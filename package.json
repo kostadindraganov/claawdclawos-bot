@@ -1,0 +1,48 @@
+{
+  "name": "claudeclaw-os",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hostable multi-agent Claude orchestrator with persistent memory, voice I/O, war room, security, and dashboard.",
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npm run build:warroom",
+    "build:warroom": "tsx -e \"import { getWarRoomHtml } from './warroom/warroom-html.ts'; import { writeFileSync } from 'fs'; writeFileSync('./warroom/warroom.html', getWarRoomHtml());\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "setup": "tsx scripts/setup.ts",
+    "status": "tsx scripts/status.ts",
+    "dashboard": "tsx src/dashboard.ts",
+    "warroom": "tsx src/agent-voice-bridge.ts",
+    "schedule": "tsx src/schedule-cli.ts",
+    "mission": "tsx src/mission-cli.ts",
+    "meet": "tsx src/meet-cli.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.34",
+    "@google/generative-ai": "^0.21.0",
+    "@hono/node-server": "^1.13.0",
+    "@slack/web-api": "^7.7.0",
+    "better-sqlite3": "^11.5.0",
+    "grammy": "^1.30.0",
+    "hono": "^4.6.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0",
+    "ws": "^8.20.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.7.0",
+    "@types/qrcode-terminal": "^0.12.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "main": {
+    "persona": "Charon",
+    "title": "Hand of the King",
+    "voice_id_elevenlabs": "21m00Tcm4TlvDq8ikWAM",
+    "voice_id_cartesia": "a0e99841-438c-4a64-b679-ae501e7d6091",
+    "gemini_voice": "Puck"
+  },
+  "comms": {
+    "persona": "Aoede",
+    "title": "Master of Whisperers",
+    "voice_id_elevenlabs": "EXAVITQu4vr4xnSDxMaL",
+    "voice_id_cartesia": "b7d50908-b564-4a6e-82f0-c6f48e367f0f",
+    "gemini_voice": "Charon"
+  },
+  "content": {
+    "persona": "Leda",
+    "title": "Royal Bard",
+    "voice_id_elevenlabs": "AZnzlk1XvdvUeBnXmlld",
+    "voice_id_cartesia": "79a125e8-cd45-4c13-8a67-188112f4dd22",
+    "gemini_voice": "Kore"
+  },
+  "ops": {
+    "persona": "Alnilam",
+    "title": "Master of War",
+    "voice_id_elevenlabs": "VR6AewLTigWG4xSOukaG",
+    "voice_id_cartesia": "6c9e36f8-dd62-4acf-aee1-8a5e1ba91b5d",
+    "gemini_voice": "Fenrir"
+  },
+  "research": {
+    "persona": "Kore",
+    "title": "Grand Maester",
+    "voice_id_elevenlabs": "pNInz6obpgDQGcFmaJgB",
+    "voice_id_cartesia": "a167e0f3-df7e-4d52-a9c3-f949145f52bd",
+    "gemini_voice": "Aoede"
+  }
+}

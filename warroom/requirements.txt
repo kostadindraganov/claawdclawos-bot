@@ -1,0 +1,9 @@
+pipecat-ai==0.0.75
+pipecat-ai[daily]==0.0.75
+pipecat-ai[google]==0.0.75
+pipecat-ai[deepgram]==0.0.75
+pipecat-ai[cartesia]==0.0.75
+fastapi==0.115.0
+uvicorn[standard]==0.31.0
+websockets==13.1
+python-dotenv==1.0.1

@@ -1,0 +1,15 @@
+# Agent Configuration Template
+# Copy this directory to create a new agent.
+
+agent_id: _template
+persona_name: Template
+persona_title: Template Agent
+specialty: General-purpose template
+
+# MCP servers this agent is allowed to use
+mcp_allowlist:
+  - Read
+  - Write
+
+# Model override (optional — defaults to config.anthropicModel)
+# model: claude-sonnet-4-20250514

@@ -1,0 +1,499 @@
+// warroom-html.ts — Cinematic War Room browser UI
+// Served by warroom/server.py at GET /
+
+export function getWarRoomHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAUDECLAW — War Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04040a;--bg2:#08080f;--bg3:#0e0e1a;--bg4:#141425;
+  --border:#161625;--border2:#202035;
+  --text:#d8d8ee;--text2:#5050a0;--text3:#2d2d60;
+  --accent:#6366f1;--accent2:#818cf8;
+  --gold:#c9953a;--gold2:#e8c060;
+  --green:#22c55e;--red:#ef4444;--cyan:#06b6d4;
+  --c-main:#6366f1;--c-comms:#06b6d4;--c-content:#a855f7;--c-ops:#f59e0b;--c-research:#10b981;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* Grid background */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(99,102,241,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,.025) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0}
+
+/* Intro */
+.intro{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .8s ease}
+.intro.out{opacity:0;pointer-events:none}
+.intro-title{font-size:2.8rem;font-weight:900;letter-spacing:.2em;
+  background:linear-gradient(135deg,var(--gold),var(--gold2),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:glow 2.5s ease-in-out infinite alternate}
+.intro-sub{margin-top:.5rem;font-size:.75rem;letter-spacing:.35em;text-transform:uppercase;
+  color:var(--text2);animation:fadeup 1s ease .4s both}
+@keyframes glow{from{filter:brightness(.75)}to{filter:brightness(1.15)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* App shell */
+.app{display:flex;flex-direction:column;height:100%;position:relative;z-index:1;
+  opacity:0;transition:opacity .5s ease .3s}
+.app.show{opacity:1}
+
+/* Header */
+.hdr{height:48px;border-bottom:1px solid var(--border2);
+  background:rgba(4,4,10,.95);backdrop-filter:blur(12px);
+  padding:0 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10}
+.hdr-logo{font-weight:800;font-size:.88rem;letter-spacing:.1em;color:var(--gold)}
+.mode-tag{font:.65rem var(--mono);padding:3px 8px;border-radius:4px;
+  background:rgba(99,102,241,.12);color:var(--accent2);letter-spacing:.05em;text-transform:uppercase}
+.hdr-sep{flex:1}
+.hdr-status{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text2)}
+.ws-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.ws-dot.on{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5);animation:blink 2s infinite}
+.ws-dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Body */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* Agent sidebar */
+.sidebar{width:200px;border-right:1px solid var(--border2);background:rgba(6,6,14,.8);
+  display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sidebar-hd{padding:10px 14px;font:.63rem var(--mono);font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+.ag-card{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);
+  transition:background .15s;position:relative;display:flex;align-items:center;gap:10px}
+.ag-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  border-radius:0 2px 2px 0;opacity:0;transition:opacity .15s}
+.ag-card.sel::before{opacity:1}
+.ag-card.sel{background:rgba(99,102,241,.05)}
+.ag-card:hover:not(.sel){background:rgba(255,255,255,.02)}
+.ag-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:#fff;
+  transition:box-shadow .2s}
+.ag-card.sel .ag-av{box-shadow:0 0 14px currentColor}
+.ag-info{flex:1;min-width:0}
+.ag-name{font-weight:600;font-size:.78rem;line-height:1.2}
+.ag-title{font-size:.62rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-sel-ind{font:.55rem var(--mono);padding:2px 5px;border-radius:3px;flex-shrink:0;
+  opacity:0;transition:opacity .15s}
+.ag-card.sel .ag-sel-ind{opacity:1;background:rgba(99,102,241,.2);color:var(--accent2)}
+
+/* Transcript area */
+.transcript{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.transcript-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.transcript-msgs::-webkit-scrollbar{width:3px}
+.transcript-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg-wrap{display:flex;gap:8px;align-items:flex-start;animation:msgIn .25s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.65rem;color:#fff}
+.msg-body{max-width:75%}
+.msg-label{font-size:.6rem;color:var(--text2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.msg-bubble{padding:8px 12px;border-radius:10px;font-size:.82rem;line-height:1.55}
+.msg-user .msg-bubble{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.18);border-bottom-left-radius:3px}
+.msg-user{flex-direction:row-reverse}
+.msg-user .msg-body{text-align:right}
+.msg-agent .msg-bubble{background:var(--bg3);border:1px solid var(--border2);border-bottom-left-radius:3px}
+.msg-empty{text-align:center;color:var(--text3);font-size:.78rem;margin:auto;line-height:2}
+
+/* Thinking indicator */
+.thinking{display:flex;align-items:center;gap:4px;padding:8px 12px}
+.thinking span{width:5px;height:5px;border-radius:50%;background:var(--text2);animation:th .8s infinite}
+.thinking span:nth-child(2){animation-delay:.15s}
+.thinking span:nth-child(3){animation-delay:.3s}
+@keyframes th{0%,80%,100%{transform:scale(.8);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* Controls */
+.controls{padding:12px 20px;border-top:1px solid var(--border2);
+  background:rgba(4,4,10,.98);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.mic-btn{width:52px;height:52px;border-radius:50%;
+  border:2px solid var(--border2);background:var(--bg3);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;color:var(--text2);flex-shrink:0}
+.mic-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mic-btn.rec{border-color:var(--red);background:rgba(239,68,68,.12);
+  color:var(--red);animation:recpulse 1.5s ease-in-out infinite}
+@keyframes recpulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.35)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.tbar{flex:1;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 14px;font:.8rem var(--mono);
+  color:var(--text2);min-height:44px;display:flex;align-items:center;
+  transition:border-color .2s;overflow:hidden}
+.tbar.active{border-color:var(--accent);color:var(--text)}
+.waveform{display:flex;align-items:center;gap:3px;height:20px;margin-left:8px}
+.wbar{width:3px;border-radius:2px;background:var(--red);animation:wave 1.2s ease-in-out infinite}
+.wbar:nth-child(1){height:6px;animation-delay:0s}
+.wbar:nth-child(2){height:14px;animation-delay:.1s}
+.wbar:nth-child(3){height:20px;animation-delay:.2s}
+.wbar:nth-child(4){height:14px;animation-delay:.3s}
+.wbar:nth-child(5){height:8px;animation-delay:.4s}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.target-label{font-size:.7rem;color:var(--text2);flex-shrink:0;text-align:right}
+.target-name{font-weight:600;display:block}
+
+/* Meeting Mode & Controls */
+.end-btn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);
+  padding:8px 16px;border-radius:12px;font-weight:600;font-size:.8rem;cursor:pointer;
+  transition:all .2s;}
+.end-btn:hover{background:rgba(239,68,68,.2);border-color:var(--red)}
+.mode-panel{margin-top:auto;padding:14px;border-top:1px solid var(--border)}
+.mode-toggles{display:flex;background:var(--bg);border-radius:8px;padding:3px;margin:8px 0;
+  border:1px solid var(--border2)}
+.mode-btn{flex:1;text-align:center;font-size:.65rem;font-weight:700;padding:6px;
+  cursor:pointer;border-radius:6px;color:var(--text2);transition:all .2s;
+  letter-spacing:.05em}
+.mode-btn.active{background:rgba(99,102,241,.15);color:var(--accent2)}
+.mode-desc{font-size:.65rem;color:var(--text3);line-height:1.4}
+.msg-agent .msg-label{color:var(--green)}
+.msg-user .msg-label{color:var(--accent2)}
+
+/* Agent cards tweak */
+.ag-card{margin:0 10px 8px 10px; border:1px solid transparent; border-radius:10px}
+.ag-card.sel{background:var(--bg3); border-color:var(--border2)}
+.ag-card.sel::before{display:none} /* remove old ind */
+
+@media(max-width:700px){
+  .sidebar{width:150px}
+  .ag-title{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro">
+  <div class="intro-title">WAR ROOM</div>
+  <div class="intro-sub">CLAUDECLAW OS &nbsp;·&nbsp; Agent Council</div>
+</div>
+
+<div class="app" id="app">
+  <header class="hdr">
+    <span class="hdr-logo">WAR ROOM</span>
+    <span class="mode-tag" id="modeTag">live</span>
+    <div class="hdr-sep"></div>
+    <button id="ttsBtn" onclick="toggleTts()" title="Toggle voice responses"
+      style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);border-radius:6px;
+             color:var(--accent2);cursor:pointer;padding:4px 10px;font:.68rem var(--mono);
+             display:flex;align-items:center;gap:5px;transition:all .15s">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+      VOICE ON
+    </button>
+    <div class="hdr-status">
+      <span class="ws-dot" id="wsDot"></span>
+      <span id="wsSt">Connecting…</span>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sidebar-hd">YOUR TEAM</div>
+      <div id="agentCards"></div>
+      
+      <div class="mode-panel">
+        <div class="sidebar-hd" style="border:none;padding-bottom:5px">MEETING MODE</div>
+        <div class="mode-toggles">
+          <div class="mode-btn active" id="btnDirect" onclick="setMode('direct')">DIRECT</div>
+          <div class="mode-btn" id="btnHandUp" onclick="setMode('handup')">HAND UP</div>
+        </div>
+        <div class="mode-desc" id="modeDesc">Direct: talk to the pinned agent. Hand Up: the team listens, best-fit answers.</div>
+      </div>
+    </aside>
+    <div class="transcript">
+      <div class="transcript-msgs" id="msgs">
+        <div class="msg-empty">Select an agent and hold the mic to speak.<br>No agent selected → routes to Charon (main).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="end-btn" onclick="endMeeting()">End Meeting</button>
+    <button class="mic-btn" id="micBtn" title="Hold or click to speak" aria-label="Microphone">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <div class="tbar" id="tbar">
+      <span id="tbarText">MIC</span>
+      <div class="waveform" id="wave" style="display:none">
+        <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AGENTS = [
+  {id:'main',    name:'Charon',   title:'Hand of the King',      init:'C', color:'#6366f1'},
+  {id:'comms',   name:'Aoede',    title:'Master of Whisperers',  init:'A', color:'#06b6d4'},
+  {id:'content', name:'Leda',     title:'Royal Bard',            init:'L', color:'#a855f7'},
+  {id:'ops',     name:'Alnilam',  title:'Master of War',         init:'N', color:'#f59e0b'},
+  {id:'research',name:'Kore',     title:'Grand Maester',         init:'K', color:'#10b981'},
+];
+
+let selectedAgent = null; // null = main (default routing)
+let ws, isRec = false, recognition;
+let ttsEnabled = true;
+
+// ── TTS ──
+const synth = window.speechSynthesis;
+function getVoice(agentId) {
+  const voices = synth.getVoices();
+  // Map agents to distinct voice characteristics
+  const prefs = {
+    main:     { name: /Google UK English Male|Daniel|Alex/i },
+    comms:    { name: /Google UK English Female|Samantha|Victoria/i },
+    content:  { name: /Karen|Fiona|Moira/i },
+    ops:      { name: /Fred|Ralph|Bruce/i },
+    research: { name: /Zarvox|Google.*Male/i },
+  };
+  const pref = prefs[agentId];
+  if (pref) {
+    const match = voices.find(v => pref.name.test(v.name));
+    if (match) return match;
+  }
+  return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+}
+
+function speak(agentId, text) {
+  if (!ttsEnabled || !synth) return;
+  synth.cancel();
+  const utt = new SpeechSynthesisUtterance(text.slice(0, 500));
+  utt.voice = getVoice(agentId);
+  const ag = AGENTS.find(a => a.id === agentId);
+  utt.rate = agentId === 'ops' ? 1.15 : agentId === 'research' ? 0.9 : 1.0;
+  utt.pitch = agentId === 'content' ? 1.1 : agentId === 'comms' ? 1.05 : 1.0;
+  synth.speak(utt);
+}
+const WS_URL = (location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws/audio';
+
+// ── Intro ──
+setTimeout(() => {
+  const intro = document.getElementById('intro');
+  const app = document.getElementById('app');
+  intro.classList.add('out');
+  app.classList.add('show');
+  setTimeout(() => intro.style.display='none', 900);
+  buildAgents();
+  connectWS();
+}, 2200);
+
+// ── Build agent cards ──
+function buildAgents() {
+  const el = document.getElementById('agentCards');
+  el.innerHTML = AGENTS.map(a => \`
+    <div class="ag-card" id="agc-\${a.id}" onclick="selectAgent('\${a.id}')"
+      style="--ag-c:\${a.color}">
+      <div class="ag-av" style="background:linear-gradient(135deg,\${a.color},\${a.color}88)">\${a.init}</div>
+      <div class="ag-info">
+        <div class="ag-name">\${a.name}</div>
+        <div class="ag-title">\${a.title}</div>
+      </div>
+      <span class="ag-sel-ind">ON</span>
+    </div>
+    <style>#agc-\${a.id}::before{background:\${a.color}}</style>
+  \`).join('');
+}
+
+function toggleTts() {
+  ttsEnabled = !ttsEnabled;
+  const btn = document.getElementById('ttsBtn');
+  if (ttsEnabled) {
+    btn.style.background = 'rgba(99,102,241,.15)';
+    btn.style.color = 'var(--accent2)';
+    btn.querySelector('svg').nextSibling.textContent = ' VOICE ON';
+  } else {
+    synth.cancel();
+    btn.style.background = 'rgba(80,80,160,.08)';
+    btn.style.color = 'var(--text3)';
+    btn.querySelector('svg').nextSibling.textContent = ' VOICE OFF';
+  }
+}
+
+function setMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  if (mode === 'direct') {
+    document.getElementById('btnDirect').classList.add('active');
+  } else {
+    document.getElementById('btnHandUp').classList.add('active');
+    // If hand-up, default to no specific agent pin
+    if (selectedAgent) selectAgent(selectedAgent); 
+  }
+}
+
+function endMeeting() {
+  stopRec();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.close();
+  }
+  document.getElementById('msgs').innerHTML = '<div class="msg-empty" style="color:var(--red)">Meeting Ended</div>';
+}
+
+function selectAgent(id) {
+  // Toggle off if already selected
+  if (selectedAgent === id) {
+    selectedAgent = null;
+    document.querySelectorAll('.ag-card').forEach(c => c.classList.remove('sel'));
+    document.getElementById('targetName').textContent = 'Main (all)';
+    document.getElementById('targetName').style.color = 'var(--accent2)';
+    return;
+  }
+  selectedAgent = id;
+  document.querySelectorAll('.ag-card').forEach(c => c.classList.remove('sel'));
+  const card = document.getElementById('agc-' + id);
+  if (card) card.classList.add('sel');
+  const ag = AGENTS.find(a => a.id === id);
+  if (ag) {
+    document.getElementById('targetName').textContent = ag.name;
+    document.getElementById('targetName').style.color = ag.color;
+  }
+}
+
+// ── Transcript ──
+function clearEmpty() {
+  const el = document.querySelector('.msg-empty');
+  if (el) el.remove();
+}
+
+function addMsg(agentId, text, isUser) {
+  clearEmpty();
+  const msgs = document.getElementById('msgs');
+  const ag = AGENTS.find(a => a.id === agentId) || {name: agentId, color:'#6868a0', init: agentId[0].toUpperCase()};
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + (isUser ? 'msg-user' : 'msg-agent');
+  wrap.innerHTML = \`
+    <div class="msg-av" style="background:linear-gradient(135deg,\${ag.color},\${ag.color}88)">\${isUser?'You'[0]:ag.init}</div>
+    <div class="msg-body">
+      <div class="msg-label">\${isUser?'You':ag.name}</div>
+      <div class="msg-bubble">\${escHtml(text)}</div>
+    </div>\`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let thinkEl = null;
+function showThinking(agentId) {
+  clearEmpty();
+  const msgs = document.getElementById('msgs');
+  const ag = AGENTS.find(a => a.id === agentId) || {color:'#6868a0', init:'?'};
+  thinkEl = document.createElement('div');
+  thinkEl.className = 'msg-wrap msg-agent';
+  thinkEl.innerHTML = \`
+    <div class="msg-av" style="background:linear-gradient(135deg,\${ag.color},\${ag.color}88)">\${ag.init}</div>
+    <div class="msg-body"><div class="thinking"><span></span><span></span><span></span></div></div>\`;
+  msgs.appendChild(thinkEl);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function hideThinking() { if (thinkEl) { thinkEl.remove(); thinkEl = null; } }
+
+// ── WebSocket ──
+function connectWS() {
+  ws = new WebSocket(WS_URL);
+  const dot = document.getElementById('wsDot');
+  const st = document.getElementById('wsSt');
+  ws.onopen = () => { dot.className='ws-dot on'; st.textContent='Connected'; };
+  ws.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'response') {
+        hideThinking();
+        addMsg(d.agent_id, d.text, false);
+        speak(d.agent_id, d.text);
+      } else if (d.type === 'mode_changed') {
+        document.getElementById('modeTag').textContent = d.mode;
+      } else if (d.type === 'error') {
+        hideThinking();
+      }
+    } catch {}
+  };
+  ws.onclose = () => { dot.className='ws-dot err'; st.textContent='Reconnecting…'; setTimeout(connectWS, 2000); };
+  ws.onerror = () => ws.close();
+}
+
+function sendTranscription(text) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({
+    type: 'transcription',
+    text,
+    agent_id: selectedAgent || null,
+  }));
+  addMsg(selectedAgent || 'main', text, true);
+  const targetId = selectedAgent || 'main';
+  showThinking(targetId);
+}
+
+// ── Speech Recognition ──
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.onresult = e => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    const shown = final || interim || 'Listening…';
+    document.getElementById('tbarText').textContent = shown;
+    document.getElementById('tbar').classList.add('active');
+    if (final.trim()) {
+      sendTranscription(final.trim());
+      stopRec();
+    }
+  };
+  recognition.onerror = () => { document.getElementById('tbarText').textContent = 'Speech error. Try again.'; stopRec(); };
+  recognition.onend = () => { if (isRec) stopRec(); };
+}
+
+function startRec() {
+  if (isRec) return;
+  isRec = true;
+  document.getElementById('micBtn').classList.add('rec');
+  document.getElementById('tbarText').textContent = 'Listening…';
+  document.getElementById('wave').style.display = 'flex';
+  document.getElementById('tbar').classList.add('active');
+  if (recognition) { try { recognition.start(); } catch {} }
+}
+
+function stopRec() {
+  if (!isRec) return;
+  isRec = false;
+  document.getElementById('micBtn').classList.remove('rec');
+  document.getElementById('wave').style.display = 'none';
+  document.getElementById('tbar').classList.remove('active');
+  document.getElementById('tbarText').textContent = 'Press and hold the microphone to speak…';
+  if (recognition) { try { recognition.stop(); } catch {} }
+}
+
+const mb = document.getElementById('micBtn');
+mb.addEventListener('mousedown', startRec);
+mb.addEventListener('mouseup', stopRec);
+mb.addEventListener('mouseleave', stopRec);
+mb.addEventListener('touchstart', e => { e.preventDefault(); startRec(); });
+mb.addEventListener('touchend', e => { e.preventDefault(); stopRec(); });
+</script>
+</body>
+</html>`;
+}
